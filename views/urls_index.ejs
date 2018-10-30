@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>TinyApp</title>
+</head>
+<body>
+    <!-- Add your EJS code here -->
+    <table>
+
+      <% for (let link in urls) { %>
+        <tr> <%= urls[link] %> </tr></br>
+      <% } %>
+
+    </table>
+    <h3><a href = "#">Shorten another link!</a></br></h3>
+
+</body>
+</html>
