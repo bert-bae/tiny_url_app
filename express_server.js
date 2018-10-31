@@ -38,7 +38,6 @@ app.get('/urls/:id', (request, response) => {
 // https://expressjs.com/en/api.html (search req.params --> retrieving :shortURL)
 app.get("/u/:shortURL", (request, response) => {
   let longURL = urlDatabase[request.params.shortURL];
-  console.log(request.params.shortURL);
   response.redirect(longURL);
 });
 
