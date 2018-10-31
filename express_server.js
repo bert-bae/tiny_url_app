@@ -1,18 +1,21 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
-app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
+app.set('view engine', 'ejs');
 
 let urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+
 app.get('/urls', (request, response) => {
-  let templateVariables = { urls: urlDatabase };
+  let templateVariables = { urls: urlDatabase, username: request.cookies.username };
   response.render('urls_index', templateVariables);
 });
 
@@ -25,13 +28,15 @@ app.post('/urls', (request, response) => {
 });
 
 app.get('/urls/new', (request, response) => {
-  response.render('urls_new');
+  let templateVariables = { username: request.cookies.username };
+  response.render('urls_new', templateVariables);
 });
 
 app.get('/urls/:id', (request, response) => {
   let templateVariables = {
     shortURL: request.params.id,
-    link: urlDatabase
+    link: urlDatabase,
+    username: request.cookies.username
   };
   response.render('urls_show', templateVariables);
 });
@@ -39,9 +44,11 @@ app.get('/urls/:id', (request, response) => {
 app.post('/urls/:id', (request, response) => {
   let templateVariables = { urls: urlDatabase };
   for (let link in urlDatabase) {
-    urlDatabase[link] = request.body.longURL;
+    console.log(link);
+    if (link == request.params.id) {
+      urlDatabase[link] = request.body.longURL;
+    }
   }
-  console.log(urlDatabase);
   response.redirect('/urls');
 });
 
@@ -61,6 +68,18 @@ app.get("/u/:shortURL", (request, response) => {
   response.redirect(longURL);
 });
 
+// login, redirect via showing if login cookie is present
+app.post('/login', (request, response ) => {
+  response.cookie('username', request.body.username);
+  response.redirect('/urls');
+});
+
+// redirect and provide option to login again
+app.post('/logout', (request, response) => {
+  response.clearCookie('username');
+  console.log(undefined);
+  response.redirect('/urls');
+});
 
 // Generate random number [A-Za-z0-9]
 function generateRandomString() {
