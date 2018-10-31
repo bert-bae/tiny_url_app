@@ -41,11 +41,11 @@ app.get('/urls/:id', (request, response) => {
   response.render('urls_show', templateVariables);
 });
 
+// update new longURL with shortURL as long as new longURL is not blank;
 app.post('/urls/:id', (request, response) => {
   let templateVariables = { urls: urlDatabase };
   for (let link in urlDatabase) {
-    console.log(link);
-    if (link == request.params.id) {
+    if (link == request.params.id && request.body.longURL !== "") {
       urlDatabase[link] = request.body.longURL;
     }
   }
@@ -77,7 +77,6 @@ app.post('/login', (request, response ) => {
 // redirect and provide option to login again
 app.post('/logout', (request, response) => {
   response.clearCookie('username');
-  console.log(undefined);
   response.redirect('/urls');
 });
 
