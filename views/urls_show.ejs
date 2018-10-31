@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>TinyApp</title>
-</head>
-<body>
-    <!-- Add your EJS code here -->
-    <% include ./partials/_header.ejs %>
 
-    <p> <%= shortURL %> </p>
-    <p> <%= link[shortURL] %> </p>
+  <% include ./partials/_head.ejs %>
+
+  <body>
+      <!-- Add your EJS code here -->
+      <% include ./partials/_header.ejs %>
+
+      <h3> Short URL: <%= shortURL %> </h3>
+      <p>
+        <form method = "POST" action "/urls/:id">
+          <input type = "text" name = "longURL" placeholder = <%= link[shortURL] %>>
+          </input>
+          <button>Update URL</button>
+        </form>
+      </p>
 
 
 
-</body>
+  </body>
 </html>

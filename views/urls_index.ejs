@@ -1,21 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>TinyApp</title>
-</head>
-<body>
-    <!-- Add your EJS code here -->
 
-    <% include ./partials/_header.ejs %>
+  <% include ./partials/_head.ejs %>
 
-    <table>
+  <body>
+      <!-- Add your EJS code here -->
 
-      <% for (let link in urls) { %>
-        <tr> <%= urls[link] %> </tr></br>
-      <% } %>
+      <% include ./partials/_header.ejs %>
 
-    </table>
-    <h3><a href = "#">Shorten another link!</a></br></h3>
+      <table>
 
-</body>
+        <% for (let link in urls) { %>
+          <tr>
+            <a href = <%= urls[link] %>><%= urls[link] %></a>
+            <form method = "GET" action = "/urls/<%= link %>">
+              <button>Edit</button>
+            </form>
+
+            <form method = "POST" action = "/urls/<%= link %>/delete">
+              <button>Delete</button>
+            </form>
+          </tr><br>
+        <% } %>
+
+      </table>
+      <h3><a href = "/urls/new">Shorten another link!</a></br></h3>
+
+  </body>
 </html>
