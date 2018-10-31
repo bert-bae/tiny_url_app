@@ -13,7 +13,6 @@ let urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-
 app.get('/urls', (request, response) => {
   let templateVariables = { urls: urlDatabase, username: request.cookies.username };
   response.render('urls_index', templateVariables);
