@@ -16,14 +16,11 @@ app.get('/urls', (request, response) => {
   response.render('urls_index', templateVariables);
 });
 
+// when client inserts long URL, generate shortURL and submit to urlDatabase object as pair
 app.post('/urls', (request, response) => {
-  // console.log(request.body);  // debug statement to see POST parameters
-  // response.send("Ok");         // Respond with 'Ok' (we will replace this)
-  // let templateVariables = { longURL: request.body.longURL};
-  // response.send(generateRandomString());
-  urlDatabase[generateRandomString()] = request.body.longURL;
-  console.log(urlDatabase);
-  response.send(urlDatabase);
+  let newKey = generateRandomString();
+  urlDatabase[newKey] = request.body.longURL;
+  response.send(`302: Redirecting to http://localhost:8080/urls/${newKey}`);
 });
 
 app.get('/urls/new', (request, response) => {
@@ -36,6 +33,13 @@ app.get('/urls/:id', (request, response) => {
     link: urlDatabase
   };
   response.render('urls_show', templateVariables);
+});
+
+// https://expressjs.com/en/api.html (search req.params --> retrieving :shortURL)
+app.get("/u/:shortURL", (request, response) => {
+  let longURL = urlDatabase[request.params.shortURL];
+  console.log(request.params.shortURL);
+  response.redirect(longURL);
 });
 
 
