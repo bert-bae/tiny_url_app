@@ -15,16 +15,19 @@ let urlDatabase = {
 
 const users  = {
   randomUser1: {
+    id: "randomUser1",
     userid: "idname1",
     email: "useremail1@gmail.com",
     password: "password1"
   },
   randomUser2: {
+    id: "randomUser2",
     userid: "idname2",
     email: "useremail2@gmail.com",
     password: "password2"
   }
 };
+
 
 app.get('/', (request, response) => {
   response.send("Welcome!");
@@ -124,30 +127,22 @@ app.get('/login', (request, response) => {
   }
 });
 
-// login, redirect via showing if login cookie is present
 app.post('/login', (request, response ) => {
-  for (let user in users) {
-    console.log(user);
-    switch (true) {
-      case Boolean(users[user].email === request.body.email && users[user].password === request.body.password):
-        response.cookie('user_id', user);
-        response.redirect('/');
-        break;
-      case Boolean(users[user].email === request.body.email && users[user].password !== request.body.password):
-        response.status('403').send('Error 403: Password is incorrect.');
-        break;
-      case Boolean(users[user].email !== request.body.email):
-        response.status('403').send('Error 403: E-Mail is not assigned to an existing account.');
-        break;
-    }
+  if (findUserByEmail(request.body.email) === false) {
+    response.status('403').send('Error 403: E-Mail is not valid');
+  } else if (findUserByEmail(request.body.email).password === request.body.password) {
+    response.cookie('user_id', findUserByEmail(request.body.email));
+    response.redirect('/');
+  } else if (findUserByEmail(request.body.email).password !== request.body.password) {
+    response.status('403').send('Error 403: Password is incorrect.');
   }
+  console.log("testing login: ", users);
 });
 
 // redirect and provide option to login again
 app.post('/logout', (request, response) => {
   response.clearCookie('user_id');
   response.redirect('/urls');
-  console.log(users);
 });
 
 app.get('/register', (request, response) => {
@@ -160,26 +155,30 @@ app.get('/register', (request, response) => {
 // registration section
 app.post('/register', (request, response) => {
   let userKey = generateRandomString();
-  switch (false) {
-    case Boolean(request.body.userid):
-      response.status('400').send('Error 400: User ID is necessary.');
-      break;
-    case Boolean(request.body.email):
-      response.status('400').send('Error 400: E-Mail is necessary.');
-      break;
-    case Boolean(request.body.password):
-      response.status('400').send('Error 400: Password is necessary.');
-      break;
-    default:
-      users[userKey] = {
-        userid: request.body.userid,
-        email: request.body.email,
-        password: request.body.password
-      };
-      console.log(users);
-      response.cookie('user_id', userKey);
-      response.redirect('urls');
-      break;
+  if (findUserByEmail(request.body.email) !== false) {
+    response.status('403').send('Error 403: E-Mail is linked with an account.');
+  } else {
+    switch (false) {
+      case Boolean(request.body.userid):
+        response.status('400').send('Error 400: User ID is necessary.');
+        break;
+      case Boolean(request.body.email):
+        response.status('400').send('Error 400: E-Mail is necessary.');
+        break;
+      case Boolean(request.body.password):
+        response.status('400').send('Error 400: Password is necessary.');
+        break;
+      default:
+        users[userKey] = {
+          id: userKey,
+          userid: request.body.userid,
+          email: request.body.email,
+          password: request.body.password
+        };
+        response.cookie('user_id', userKey);
+        response.redirect('urls');
+        break;
+    }
   }
 });
 
@@ -191,6 +190,16 @@ function generateRandomString() {
     result.push(possibleChars[Math.floor(Math.random() * possibleChars.length)]);
   }
   return result.join("");
+}
+
+// existing account verification, if existing, then return the user_id key. If not, then return false
+function findUserByEmail(email) {
+  for (let user in users) {
+    if (email === users[user].email) {
+      return users[user];
+    }
+  }
+  return false;
 }
 
 // port verification on console
