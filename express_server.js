@@ -136,7 +136,6 @@ app.post('/login', (request, response ) => {
   } else if (findUserByEmail(request.body.email).password !== request.body.password) {
     response.status('403').send('Error 403: Password is incorrect.');
   }
-  console.log("testing login: ", users);
 });
 
 // redirect and provide option to login again
