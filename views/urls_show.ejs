@@ -9,7 +9,7 @@
 
       <h3> Short URL: <%= shortURL %> </h3>
       <p>
-        <form method = "POST" action "/urls/:id">
+        <form method = "POST" action "/urls/:id" style = "display: inline">
           <input type = "text" name = "longURL" placeholder = <%= link[shortURL] %>>
           </input>
           <button>Update URL</button>

@@ -1,15 +1,18 @@
 <header>
-  <h1>Header Title</h1>
+  <h1>Miniaturize your URL!</h1>
 
     <% if (username) { %>
-      <p> Welcome to your short URLs <%= username %>!
+      <p> Welcome to your short URLs, <%= username %>!
         <form method = "POST" action = "/logout">
           <button>Log Out</button></p>
         </form>
     <% } else { %>
-      <form method = "POST" action = "/login">
+      <form method = "POST" action = "/login" style = "display: inline">
         <input type = "text" name = "username" placeholder = "Username">
         <button>Submit</button>
+      </form>
+      <form method = "GET" action = "/register" style = "display: inline">
+        <button>Register</button>
       </form>
     <% } %>
 

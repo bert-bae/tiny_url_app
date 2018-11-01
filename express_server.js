@@ -13,6 +13,19 @@ let urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users  = {
+  randomUser1: {
+    id: "idname",
+    email: "useremail",
+    password: "password"
+  },
+  randomUser2: {
+    id: "idname",
+    email: "useremail",
+    password: "password"
+  }
+};
+
 app.get('/urls', (request, response) => {
   let templateVariables = { urls: urlDatabase, username: request.cookies.username };
   response.render('urls_index', templateVariables);
@@ -77,6 +90,37 @@ app.post('/login', (request, response ) => {
 app.post('/logout', (request, response) => {
   response.clearCookie('username');
   response.redirect('/urls');
+});
+
+app.get('/register', (request, response) => {
+  let templateVariables = {
+    urls: urlDatabase,
+  };
+  response.render('urls_register');
+});
+
+app.post('/register', (request, response) => {
+  let userKey = generateRandomString();
+  switch (false) {
+    case Boolean(request.body.userid):
+      response.status('400').send('Error 400: User ID is necessary.');
+      break;
+    case Boolean(request.body.email):
+      response.status('400').send('Error 400: E-Mail is necessary.');
+      break;
+    case Boolean(request.body.password):
+      response.status('400').send('Error 400: Password is necessary.');
+      break;
+    default:
+      users[userKey] = {
+        userid: request.body.userid,
+        email: request.body.email,
+        password: request.body.password
+      };
+      response.cookie('username', request.body.userid);
+      response.redirect('urls');
+      break;
+  }
 });
 
 // Generate random number [A-Za-z0-9]

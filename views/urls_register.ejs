@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <% include ./partials/_head.ejs %>
+
+  <body style="font-size:20px; padding:50px;">
+    <header>
+      <h1>REGISTER YOUR ACCOUNT</h1>
+      <p>Register to keep track of your short URLs!</p>
+
+      <form method = "POST" action = "/register">
+        <input type = "userid" name = "userid" placeholder = "Enter your desired ID name"><br>
+        <input type = "email" name = "email" placeholder = "Enter your E-mail"><br>
+        <input type = "password" name = "password" placeholder = "Create a password"><br>
+        <button>Create new account.</button>
+      </form>
+
+  </body>
+</html>
