@@ -15,20 +15,35 @@ let urlDatabase = {
 
 const users  = {
   randomUser1: {
-    id: "idname",
-    email: "useremail",
-    password: "password"
+    userid: "idname1",
+    email: "useremail1@gmail.com",
+    password: "password1"
   },
   randomUser2: {
-    id: "idname",
-    email: "useremail",
-    password: "password"
+    userid: "idname2",
+    email: "useremail2@gmail.com",
+    password: "password2"
   }
 };
 
+app.get('/', (request, response) => {
+  response.send("Welcome!");
+});
+
 app.get('/urls', (request, response) => {
-  let templateVariables = { urls: urlDatabase, username: request.cookies.username };
-  response.render('urls_index', templateVariables);
+  if (request.cookies.user_id) {
+    let templateVariables = {
+      urls: urlDatabase,
+      username: users[request.cookies.user_id].userid,
+    };
+    response.render('urls_index', templateVariables);
+  } else {
+    let templateVariables = {
+      urls: urlDatabase,
+      username: ""
+    };
+    response.render('urls_index', templateVariables);
+  }
 });
 
 // when client inserts long URL, generate shortURL and submit to urlDatabase object as pair
@@ -36,21 +51,38 @@ app.post('/urls', (request, response) => {
   let newKey = generateRandomString();
   urlDatabase[newKey] = request.body.longURL;
   response.redirect('/urls');
-  // response.send(`302: Redirecting to http://localhost:8080/urls/${newKey}. </br> Your short link will go to: ${request.body.longURL}`);
 });
 
 app.get('/urls/new', (request, response) => {
-  let templateVariables = { username: request.cookies.username };
-  response.render('urls_new', templateVariables);
+  if (request.cookies.user_id) {
+    let templateVariables = {
+      username: users[request.cookies.user_id].userid
+    };
+    response.render('urls_new', templateVariables);
+  } else {
+    let templateVariables = {
+      username: ""
+    };
+    response.render('urls_new', templateVariables);
+  }
 });
 
 app.get('/urls/:id', (request, response) => {
-  let templateVariables = {
-    shortURL: request.params.id,
-    link: urlDatabase,
-    username: request.cookies.username
-  };
-  response.render('urls_show', templateVariables);
+  if (request.cookies.user_id) {
+    let templateVariables = {
+      shortURL: request.params.id,
+      link: urlDatabase,
+      username: users[request.cookies.user_id].userid
+    };
+    response.render('urls_show', templateVariables);
+  } else {
+    let templateVariables = {
+      shortURL: request.params.id,
+      link: urlDatabase,
+      username: ""
+    };
+    response.render('urls_show', templateVariables);
+  }
 });
 
 // update new longURL with shortURL as long as new longURL is not blank;
@@ -80,16 +112,42 @@ app.get("/u/:shortURL", (request, response) => {
   response.redirect(longURL);
 });
 
+app.get('/login', (request, response) => {
+  if (request.cookies.user_id) {
+    response.redirect('/urls');
+  } else {
+    let templateVariables = {
+      urls: urlDatabase,
+      username: ""
+    };
+    response.render('urls_login', templateVariables);
+  }
+});
+
 // login, redirect via showing if login cookie is present
 app.post('/login', (request, response ) => {
-  response.cookie('username', request.body.username);
-  response.redirect('/urls');
+  for (let user in users) {
+    console.log(user);
+    switch (true) {
+      case Boolean(users[user].email === request.body.email && users[user].password === request.body.password):
+        response.cookie('user_id', user);
+        response.redirect('/');
+        break;
+      case Boolean(users[user].email === request.body.email && users[user].password !== request.body.password):
+        response.status('403').send('Error 403: Password is incorrect.');
+        break;
+      case Boolean(users[user].email !== request.body.email):
+        response.status('403').send('Error 403: E-Mail is not assigned to an existing account.');
+        break;
+    }
+  }
 });
 
 // redirect and provide option to login again
 app.post('/logout', (request, response) => {
-  response.clearCookie('username');
+  response.clearCookie('user_id');
   response.redirect('/urls');
+  console.log(users);
 });
 
 app.get('/register', (request, response) => {
@@ -99,6 +157,7 @@ app.get('/register', (request, response) => {
   response.render('urls_register');
 });
 
+// registration section
 app.post('/register', (request, response) => {
   let userKey = generateRandomString();
   switch (false) {
@@ -117,7 +176,8 @@ app.post('/register', (request, response) => {
         email: request.body.email,
         password: request.body.password
       };
-      response.cookie('username', request.body.userid);
+      console.log(users);
+      response.cookie('user_id', userKey);
       response.redirect('urls');
       break;
   }
