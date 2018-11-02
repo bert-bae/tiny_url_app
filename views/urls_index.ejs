@@ -13,7 +13,7 @@
         <table>
           <% for (let link in urls) { %>
             <tr>
-              <a href = <%= urls[link] %>><%= urls[link] %></a>
+              <p><%= link %> - <a href = <%= urls[link] %>><%= urls[link] %></a></p>
               <form method = "GET" action = "/urls/<%= link %>">
                 <button>Edit</button>
               </form>

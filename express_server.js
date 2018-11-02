@@ -34,18 +34,18 @@ let urlDatabase = {
 };
 
 const users  = {
-  randomUser1: {
-    id: "randomUser1",
-    userid: "idname1",
-    email: "useremail1@gmail.com",
-    password: "password1"
-  },
-  randomUser2: {
-    id: "randomUser2",
-    userid: "idname2",
-    email: "useremail2@gmail.com",
-    password: "password2"
-  }
+  // randomUser1: {
+  //   id: "randomUser1",
+  //   userid: "idname1",
+  //   email: "useremail1@gmail.com",
+  //   password: "password1"
+  // },
+  // randomUser2: {
+  //   id: "randomUser2",
+  //   userid: "idname2",
+  //   email: "useremail2@gmail.com",
+  //   password: "password2"
+  // }
 };
 
 
@@ -56,12 +56,14 @@ app.get('/', (request, response) => {
 app.get('/urls', (request, response) => {
   if (request.session.user_id) {
     let templateVariables = {
-      urls: filterLinksByOwner(request.session.user_id),
+      id: users[request.session.user_id],
       username: users[request.session.user_id].userid,
-      userid: users[request.session.user_id],
+      urls: filterLinksByOwner(request.session.user_id),
+      email: users[request.session.user_id].email
     };
     response.render('urls_index', templateVariables);
   } else {
+    response.status('401');
     response.redirect('/login');
   }
 });
@@ -79,7 +81,8 @@ app.post('/urls', (request, response) => {
 app.get('/urls/new', (request, response) => {
   if (request.session.user_id) {
     let templateVariables = {
-      username: users[request.session.user_id].userid
+      username: users[request.session.user_id].userid,
+      email: users[request.session.user_id].email,
     };
     response.render('urls_new', templateVariables);
   } else {
@@ -89,15 +92,16 @@ app.get('/urls/new', (request, response) => {
 
 //check this one
 app.get('/urls/:id', (request, response) => {
-  if (request.session.user_id) {
+  if (request.session.user_id === urlDatabase[request.params.id].owner) {
     let templateVariables = {
       shortURL: request.params.id,
       urls: urlDatabase[request.params.id],
-      username: users[request.session.user_id].userid
+      username: users[request.session.user_id].userid,
+      email: users[request.session.user_id].email
     };
     response.render('urls_show', templateVariables);
-  } else {
-    response.redirect('/login');
+  } else if (!request.session.user_id) {
+    response.send('Error 401: This is not your link.');
   }
 });
 
@@ -105,11 +109,8 @@ app.get('/urls/:id', (request, response) => {
 app.post('/urls/:id', (request, response) => {
   let templateVariables = { urls: urlDatabase };
   for (let link in urlDatabase) {
-    if (urlDatabase[link].owner === request.session.user_id && request.body.longURL !== "") {
-      urlDatabase[link] = {
-        longURL: request.body.longURL,
-        owner: request.session.user_id
-      };
+    if (urlDatabase[link].owner === request.session.user_id && link === request.params.id && request.body.longURL !== "") {
+      urlDatabase[link].longURL = request.body.longURL;
     }
   }
   response.redirect('/urls');
@@ -133,11 +134,7 @@ app.get('/login', (request, response) => {
   if (request.session.user_id) {
     response.redirect('/urls');
   } else {
-    let templateVariables = {
-      urls: urlDatabase,
-      username: ""
-    };
-    response.render('urls_login', templateVariables);
+    response.render('urls_login');
   }
 });
 
@@ -147,16 +144,16 @@ app.post('/login', (request, response) => {
   if (findUserByEmail(request.body.email) === false) {
     response.status('403').send('Error 403: E-Mail is not valid');
   } else if (bcrypt.compareSync(request.body.password, findUserByEmail(request.body.email).password)) {
-    response.cookie('user_id', findUserByEmail(request.body.email).id);
+    request.session.user_id = findUserByEmail(request.body.email).id;
     response.redirect('/urls');
   } else if (findUserByEmail(request.body.email).password !== request.body.password) {
     response.status('403').send('Error 403: Password is incorrect.');
   }
 });
 
-// redirect and provide option to login again
+// redirect and provide option to login again - credit to Adam for fixing logut issue
 app.post('/logout', (request, response) => {
-  response.clearCookie('user_id');
+  delete request.session.user_id;
   response.redirect('/urls');
 });
 
@@ -190,7 +187,7 @@ app.post('/register', (request, response) => {
           email: request.body.email,
           password: bcrypt.hashSync(request.body.password, 10), // added hashed password
         };
-        response.cookie('user_id', userKey);
+        request.session.user_id = userKey;
         response.redirect('urls');
         break;
     }

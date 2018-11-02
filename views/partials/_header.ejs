@@ -1,8 +1,8 @@
 <header>
-  <h1>Miniaturize your URL!</h1>
+  <h1>TinyURL</h1>
 
     <% if (username) { %>
-      <p> Welcome to your short URLs, <%= username %>!
+      <p> Welcome <%= username %> (<%= email %>)!
         <form method = "POST" action = "/logout">
           <button>Log Out</button></p>
         </form>
