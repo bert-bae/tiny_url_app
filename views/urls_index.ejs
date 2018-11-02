@@ -13,7 +13,7 @@
         <table>
           <% for (let link in urls) { %>
             <tr>
-              <a href = <%= urls[link].longURL %>><%= urls[link].longURL %></a>
+              <a href = <%= urls[link] %>><%= urls[link] %></a>
               <form method = "GET" action = "/urls/<%= link %>">
                 <button>Edit</button>
               </form>

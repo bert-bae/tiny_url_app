@@ -50,10 +50,12 @@ app.get('/', (request, response) => {
 app.get('/urls', (request, response) => {
   if (request.cookies.user_id) {
     let templateVariables = {
-      urls: urlDatabase,
+      urls: filterLinksByOwner(request.cookies.user_id),
       username: users[request.cookies.user_id].userid,
       userid: users[request.cookies.user_id],
     };
+    console.log(filterLinksByOwner(request.cookies.user_id));
+    console.log(urlDatabase);
     response.render('urls_index', templateVariables);
   } else {
     response.redirect('/login');
@@ -63,7 +65,10 @@ app.get('/urls', (request, response) => {
 // when client inserts long URL, generate shortURL and submit to urlDatabase object as pair
 app.post('/urls', (request, response) => {
   let newKey = generateRandomString();
-  urlDatabase[newKey] = request.body.longURL;
+  urlDatabase[newKey] = {
+    longURL: request.body.longURL,
+    owner: request.cookies.user_id
+  };
   response.redirect('/urls');
 });
 
@@ -83,7 +88,7 @@ app.get('/urls/:id', (request, response) => {
   if (request.cookies.user_id) {
     let templateVariables = {
       shortURL: request.params.id,
-      link: urlDatabase,
+      urls: urlDatabase[request.params.id],
       username: users[request.cookies.user_id].userid
     };
     response.render('urls_show', templateVariables);
@@ -96,19 +101,21 @@ app.get('/urls/:id', (request, response) => {
 app.post('/urls/:id', (request, response) => {
   let templateVariables = { urls: urlDatabase };
   for (let link in urlDatabase) {
-    if (link == request.params.id && request.body.longURL !== "") {
-      urlDatabase[link] = request.body.longURL;
+    if (urlDatabase[link].owner === request.cookies.user_id && request.body.longURL !== "") {
+      urlDatabase[link] = {
+        longURL: request.body.longURL,
+        owner: request.cookies.user_id
+      };
     }
   }
+  console.log("Testing edits: ", urlDatabase);
   response.redirect('/urls');
 });
 
 app.post('/urls/:id/delete', (request, response) => {
   let templateVariables = { urls: urlDatabase };
-  for (let link in urlDatabase) {
-    if (link == request.params.id) {
-      delete urlDatabase[link];
-    }
+  if (urlDatabase[request.params.id].owner === request.cookies.user_id) {
+    delete urlDatabase[request.params.id];
   }
   response.redirect('/urls');
 });
@@ -193,6 +200,17 @@ function generateRandomString() {
     result.push(possibleChars[Math.floor(Math.random() * possibleChars.length)]);
   }
   return result.join("");
+}
+
+// received some help from Adam
+function filterLinksByOwner(userKey) {
+  let userLinks = {};
+  for (let link in urlDatabase) {
+    if (urlDatabase[link].owner === userKey) {
+      userLinks[link] = urlDatabase[link].longURL;
+    }
+  }
+  return userLinks;
 }
 
 // existing account verification, if existing, then return the user_id key. If not, then return false
