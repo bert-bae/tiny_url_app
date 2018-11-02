@@ -122,7 +122,7 @@ app.post('/urls/:id/delete', (request, response) => {
 
 // https://expressjs.com/en/api.html (search req.params --> retrieving :shortURL)
 app.get("/u/:shortURL", (request, response) => {
-  let longURL = urlDatabase[request.params.shortURL];
+  let longURL = urlDatabase[request.params.shortURL].longURL;
   response.redirect(longURL);
 });
 
