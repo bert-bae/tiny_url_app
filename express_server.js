@@ -1,4 +1,5 @@
 const express = require('express');
+const methodOverride = require('method-override');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
@@ -53,6 +54,8 @@ app.get('/', (request, response) => {
   response.send("Welcome!");
 });
 
+
+// users[request.session.user_id].userid
 app.get('/urls', (request, response) => {
   if (request.session.user_id) {
     let templateVariables = {
@@ -63,8 +66,7 @@ app.get('/urls', (request, response) => {
     };
     response.render('urls_index', templateVariables);
   } else {
-    response.status('401');
-    response.redirect('/login');
+    response.redirect(401, '/login');
   }
 });
 
@@ -90,22 +92,25 @@ app.get('/urls/new', (request, response) => {
   }
 });
 
-//check this one
 app.get('/urls/:id', (request, response) => {
-  if (request.session.user_id === urlDatabase[request.params.id].owner) {
-    let templateVariables = {
-      shortURL: request.params.id,
-      urls: urlDatabase[request.params.id],
-      username: users[request.session.user_id].userid,
-      email: users[request.session.user_id].email
-    };
-    response.render('urls_show', templateVariables);
-  } else if (!request.session.user_id) {
-    response.send('Error 401: This is not your link.');
+  if (urlDatabase.hasOwnProperty(request.params.id) !== -1) {
+    if (request.session.user_id === urlDatabase[request.params.id].owner) {
+      let templateVariables = {
+        shortURL: request.params.id,
+        urls: urlDatabase[request.params.id],
+        username: users[request.session.user_id].userid,
+        email: users[request.session.user_id].email
+      };
+      response.render('urls_show', templateVariables);
+    } else {
+      response.redirect(401, '/login');
+    }
+  } else {
+    response.redirect(401, '/login');
   }
 });
 
-// update new longURL with shortURL as long as new longURL is not blank;
+// update new longURL with shortURL as long as new longURL is not blank (only owner can edit)
 app.post('/urls/:id', (request, response) => {
   let templateVariables = { urls: urlDatabase };
   for (let link in urlDatabase) {
@@ -116,6 +121,7 @@ app.post('/urls/:id', (request, response) => {
   response.redirect('/urls');
 });
 
+// delete urls (only owner can delete)
 app.post('/urls/:id/delete', (request, response) => {
   let templateVariables = { urls: urlDatabase };
   if (urlDatabase[request.params.id].owner === request.session.user_id) {
@@ -126,8 +132,12 @@ app.post('/urls/:id/delete', (request, response) => {
 
 // https://expressjs.com/en/api.html (search req.params --> retrieving :shortURL)
 app.get("/u/:shortURL", (request, response) => {
-  let longURL = urlDatabase[request.params.shortURL].longURL;
-  response.redirect(longURL);
+  if (urlDatabase.hasOwnProperty(request.params.shortURL)) {
+    let longURL = urlDatabase[request.params.shortURL].longURL;
+    response.redirect(longURL);
+  } else {
+    response.redirect(404, '/urls');
+  }
 });
 
 app.get('/login', (request, response) => {
@@ -137,7 +147,6 @@ app.get('/login', (request, response) => {
     response.render('urls_login');
   }
 });
-
 
 // login via comparison with hashed pass
 app.post('/login', (request, response) => {
@@ -154,7 +163,7 @@ app.post('/login', (request, response) => {
 // redirect and provide option to login again - credit to Adam for fixing logut issue
 app.post('/logout', (request, response) => {
   delete request.session.user_id;
-  response.redirect('/urls');
+  response.redirect('/login');
 });
 
 app.get('/register', (request, response) => {
