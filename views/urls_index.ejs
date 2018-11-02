@@ -8,23 +8,34 @@
 
       <% include ./partials/_header.ejs %>
 
-      <table>
 
-        <% for (let link in urls) { %>
-          <tr>
-            <a href = <%= urls[link] %>><%= urls[link] %></a>
-            <form method = "GET" action = "/urls/<%= link %>">
-              <button>Edit</button>
-            </form>
+      <% if (username !== "") { %>
+        <table>
+          <% for (let link in urls) { %>
+            <tr>
+              <a href = <%= urls[link].longURL %>><%= urls[link].longURL %></a>
+              <form method = "GET" action = "/urls/<%= link %>">
+                <button>Edit</button>
+              </form>
 
-            <form method = "POST" action = "/urls/<%= link %>/delete">
-              <button>Delete</button>
-            </form>
-          </tr><br>
-        <% } %>
+              <form method = "POST" action = "/urls/<%= link %>/delete">
+                <button>Delete</button>
+              </form>
+            </tr><br>
+          <% } %>
+        </table>
+      <% } else { %>
+        <p>Create an account to make your own short URL.</p>
+      <% } %>
 
-      </table>
       <h3><a href = "/urls/new">Shorten another link!</a></br></h3>
 
   </body>
 </html>
+
+
+
+
+
+
+

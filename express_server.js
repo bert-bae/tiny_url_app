@@ -9,8 +9,22 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 
 let urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    owner: "randomUser1"
+  },
+  tsm5xK: {
+    longURL: "http://www.google.com",
+    owner: "randomUser1"
+  },
+  h2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    owner: "randomUser2"
+  },
+  csm5xK: {
+    longURL: "http://www.google.com",
+    owner: "randomUser2"
+  }
 };
 
 const users  = {
@@ -38,14 +52,11 @@ app.get('/urls', (request, response) => {
     let templateVariables = {
       urls: urlDatabase,
       username: users[request.cookies.user_id].userid,
+      userid: users[request.cookies.user_id],
     };
     response.render('urls_index', templateVariables);
   } else {
-    let templateVariables = {
-      urls: urlDatabase,
-      username: ""
-    };
-    response.render('urls_index', templateVariables);
+    response.redirect('/login');
   }
 });
 
@@ -63,13 +74,11 @@ app.get('/urls/new', (request, response) => {
     };
     response.render('urls_new', templateVariables);
   } else {
-    let templateVariables = {
-      username: ""
-    };
-    response.render('urls_new', templateVariables);
+    response.redirect('/login');
   }
 });
 
+//check this one
 app.get('/urls/:id', (request, response) => {
   if (request.cookies.user_id) {
     let templateVariables = {
@@ -79,12 +88,7 @@ app.get('/urls/:id', (request, response) => {
     };
     response.render('urls_show', templateVariables);
   } else {
-    let templateVariables = {
-      shortURL: request.params.id,
-      link: urlDatabase,
-      username: ""
-    };
-    response.render('urls_show', templateVariables);
+    response.redirect('/login');
   }
 });
 
@@ -131,8 +135,8 @@ app.post('/login', (request, response ) => {
   if (findUserByEmail(request.body.email) === false) {
     response.status('403').send('Error 403: E-Mail is not valid');
   } else if (findUserByEmail(request.body.email).password === request.body.password) {
-    response.cookie('user_id', findUserByEmail(request.body.email));
-    response.redirect('/');
+    response.cookie('user_id', findUserByEmail(request.body.email).id);
+    response.redirect('/urls');
   } else if (findUserByEmail(request.body.email).password !== request.body.password) {
     response.status('403').send('Error 403: Password is incorrect.');
   }
@@ -183,7 +187,7 @@ app.post('/register', (request, response) => {
 
 // Generate random number [A-Za-z0-9]
 function generateRandomString() {
-  let result = [];
+  let result = ["tu."];
   const possibleChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < 6; i++) {
     result.push(possibleChars[Math.floor(Math.random() * possibleChars.length)]);
