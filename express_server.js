@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 
@@ -54,8 +55,6 @@ app.get('/urls', (request, response) => {
       username: users[request.cookies.user_id].userid,
       userid: users[request.cookies.user_id],
     };
-    console.log(filterLinksByOwner(request.cookies.user_id));
-    console.log(urlDatabase);
     response.render('urls_index', templateVariables);
   } else {
     response.redirect('/login');
@@ -108,7 +107,6 @@ app.post('/urls/:id', (request, response) => {
       };
     }
   }
-  console.log("Testing edits: ", urlDatabase);
   response.redirect('/urls');
 });
 
@@ -138,10 +136,12 @@ app.get('/login', (request, response) => {
   }
 });
 
-app.post('/login', (request, response ) => {
+
+//********* need to process comparison of bcrypt.comparesync
+app.post('/login', (request, response) => {
   if (findUserByEmail(request.body.email) === false) {
     response.status('403').send('Error 403: E-Mail is not valid');
-  } else if (findUserByEmail(request.body.email).password === request.body.password) {
+  } else if (bcrypt.compareSync(request.body.password, findUserByEmail(request.body.email).password)) {
     response.cookie('user_id', findUserByEmail(request.body.email).id);
     response.redirect('/urls');
   } else if (findUserByEmail(request.body.email).password !== request.body.password) {
@@ -183,7 +183,7 @@ app.post('/register', (request, response) => {
           id: userKey,
           userid: request.body.userid,
           email: request.body.email,
-          password: request.body.password
+          password: bcrypt.hashSync(request.body.password, 10), // added hashed password
         };
         response.cookie('user_id', userKey);
         response.redirect('urls');
