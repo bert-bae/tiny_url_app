@@ -1,13 +1,18 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['TEST123', 'TEST456']
+}));
 app.set('view engine', 'ejs');
+
 
 let urlDatabase = {
   b2xVn2: {
@@ -49,11 +54,11 @@ app.get('/', (request, response) => {
 });
 
 app.get('/urls', (request, response) => {
-  if (request.cookies.user_id) {
+  if (request.session.user_id) {
     let templateVariables = {
-      urls: filterLinksByOwner(request.cookies.user_id),
-      username: users[request.cookies.user_id].userid,
-      userid: users[request.cookies.user_id],
+      urls: filterLinksByOwner(request.session.user_id),
+      username: users[request.session.user_id].userid,
+      userid: users[request.session.user_id],
     };
     response.render('urls_index', templateVariables);
   } else {
@@ -66,15 +71,15 @@ app.post('/urls', (request, response) => {
   let newKey = generateRandomString();
   urlDatabase[newKey] = {
     longURL: request.body.longURL,
-    owner: request.cookies.user_id
+    owner: request.session.user_id
   };
   response.redirect('/urls');
 });
 
 app.get('/urls/new', (request, response) => {
-  if (request.cookies.user_id) {
+  if (request.session.user_id) {
     let templateVariables = {
-      username: users[request.cookies.user_id].userid
+      username: users[request.session.user_id].userid
     };
     response.render('urls_new', templateVariables);
   } else {
@@ -84,11 +89,11 @@ app.get('/urls/new', (request, response) => {
 
 //check this one
 app.get('/urls/:id', (request, response) => {
-  if (request.cookies.user_id) {
+  if (request.session.user_id) {
     let templateVariables = {
       shortURL: request.params.id,
       urls: urlDatabase[request.params.id],
-      username: users[request.cookies.user_id].userid
+      username: users[request.session.user_id].userid
     };
     response.render('urls_show', templateVariables);
   } else {
@@ -100,10 +105,10 @@ app.get('/urls/:id', (request, response) => {
 app.post('/urls/:id', (request, response) => {
   let templateVariables = { urls: urlDatabase };
   for (let link in urlDatabase) {
-    if (urlDatabase[link].owner === request.cookies.user_id && request.body.longURL !== "") {
+    if (urlDatabase[link].owner === request.session.user_id && request.body.longURL !== "") {
       urlDatabase[link] = {
         longURL: request.body.longURL,
-        owner: request.cookies.user_id
+        owner: request.session.user_id
       };
     }
   }
@@ -112,7 +117,7 @@ app.post('/urls/:id', (request, response) => {
 
 app.post('/urls/:id/delete', (request, response) => {
   let templateVariables = { urls: urlDatabase };
-  if (urlDatabase[request.params.id].owner === request.cookies.user_id) {
+  if (urlDatabase[request.params.id].owner === request.session.user_id) {
     delete urlDatabase[request.params.id];
   }
   response.redirect('/urls');
@@ -125,7 +130,7 @@ app.get("/u/:shortURL", (request, response) => {
 });
 
 app.get('/login', (request, response) => {
-  if (request.cookies.user_id) {
+  if (request.session.user_id) {
     response.redirect('/urls');
   } else {
     let templateVariables = {
@@ -137,7 +142,7 @@ app.get('/login', (request, response) => {
 });
 
 
-//********* need to process comparison of bcrypt.comparesync
+// login via comparison with hashed pass
 app.post('/login', (request, response) => {
   if (findUserByEmail(request.body.email) === false) {
     response.status('403').send('Error 403: E-Mail is not valid');
@@ -190,6 +195,10 @@ app.post('/register', (request, response) => {
         break;
     }
   }
+});
+
+app.get('/:id', (request, response) => {
+  response.redirect('/login');
 });
 
 // Generate random number [A-Za-z0-9]
