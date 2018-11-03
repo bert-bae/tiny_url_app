@@ -125,21 +125,25 @@ app.get('/urls/new', (request, response) => {
 });
 
 app.get('/urls/:id', (request, response) => {
-  if (request.session.user_id === urlDatabase[request.params.id].owner) {
+  if (request.session.user_id) {
+    if (!urlDatabase.hasOwnProperty(request.params.id)) {
+      response.redirect(404, '/urls');
+    } else {
       let templateVariables = {
         shortURL: request.params.id,
         urls: urlDatabase[request.params.id],
         user: users[request.session.user_id],
       };
       response.render('urls_show', templateVariables);
-    } else {
-      response.redirect(401, '/login');
+    }
+  } else {
+    response.redirect(401, '/login');
   }
 });
 
 // update new longURL with shortURL as long as new longURL is not blank (only owner can edit)
 app.post('/urls/:id', (request, response) => {
-  let templateVariables = { urls: urlDatabase };
+  let templateVariables = { urls: urlDatabase[request.params.id] };
   for (let link in urlDatabase) {
     if (urlDatabase[link].owner === request.session.user_id && link === request.params.id && request.body.longURL !== "") {
       urlDatabase[link].longURL = request.body.longURL;
@@ -187,9 +191,9 @@ app.post('/login', (request, response) => {
   }
 });
 
-// redirect and provide option to login again - credit to Adam for fixing logut issue
+// redirect and provide option to login again - credit to Adam for fixing logut issue -> request.session = null, help from Andy
 app.post('/logout', (request, response) => {
-  delete request.session.user_id;
+  request.session = null;
   response.redirect('/login');
 });
 
