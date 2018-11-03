@@ -7,15 +7,45 @@ const app = express();
 const PORT = 8080;
 
 app.use(bodyParser.urlencoded({extended: true}));
-
 app.use(cookieSession({
   name: 'session',
   keys: ['TEST123', 'TEST456']
 }));
 app.set('view engine', 'ejs');
 
+// Generate random number [A-Za-z0-9]
+function generateRandomString() {
+  let result = ["tu."];
+  const possibleChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 6; i++) {
+    result.push(possibleChars[Math.floor(Math.random() * possibleChars.length)]);
+  }
+  return result.join("");
+}
 
-let urlDatabase = {
+// received some help from Adam
+function filterLinksByOwner(userKey) {
+  let userLinks = {};
+  for (let link in urlDatabase) {
+    if (urlDatabase[link].owner === userKey) {
+      userLinks[link] = urlDatabase[link].longURL;
+    }
+  }
+  return userLinks;
+}
+
+// existing account verification, if existing, then return the user_id key. If not, then return false
+function findUserByEmail(email) {
+  for (let user in users) {
+    if (email === users[user].email) {
+      return users[user];
+    }
+  }
+  return false;
+}
+
+
+const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
     owner: "randomUser1"
@@ -34,16 +64,17 @@ let urlDatabase = {
   }
 };
 
+// example of how users database is structured
 const users  = {
   // randomUser1: {
   //   id: "randomUser1",
-  //   userid: "idname1",
+  //   username: "idname1",
   //   email: "useremail1@gmail.com",
   //   password: "password1"
   // },
   // randomUser2: {
   //   id: "randomUser2",
-  //   userid: "idname2",
+  //   username: "idname2",
   //   email: "useremail2@gmail.com",
   //   password: "password2"
   // }
@@ -51,7 +82,7 @@ const users  = {
 
 
 app.get('/', (request, response) => {
-  response.send("Welcome!");
+  response.redirect('/login');
 });
 
 
@@ -59,10 +90,8 @@ app.get('/', (request, response) => {
 app.get('/urls', (request, response) => {
   if (request.session.user_id) {
     let templateVariables = {
-      id: users[request.session.user_id],
-      username: users[request.session.user_id].userid,
+      user: users[request.session.user_id],
       urls: filterLinksByOwner(request.session.user_id),
-      email: users[request.session.user_id].email
     };
     response.render('urls_index', templateVariables);
   } else {
@@ -72,19 +101,22 @@ app.get('/urls', (request, response) => {
 
 // when client inserts long URL, generate shortURL and submit to urlDatabase object as pair
 app.post('/urls', (request, response) => {
-  let newKey = generateRandomString();
-  urlDatabase[newKey] = {
-    longURL: request.body.longURL,
-    owner: request.session.user_id
-  };
-  response.redirect('/urls');
+  if (request.session.user_id) {
+    let newKey = generateRandomString();
+    urlDatabase[newKey] = {
+      longURL: request.body.longURL,
+      owner: request.session.user_id
+    };
+    response.redirect('/urls');
+  } else {
+    response.redirect(401, '/login');
+  }
 });
 
 app.get('/urls/new', (request, response) => {
   if (request.session.user_id) {
     let templateVariables = {
-      username: users[request.session.user_id].userid,
-      email: users[request.session.user_id].email,
+      user: users[request.session.user_id],
     };
     response.render('urls_new', templateVariables);
   } else {
@@ -93,20 +125,15 @@ app.get('/urls/new', (request, response) => {
 });
 
 app.get('/urls/:id', (request, response) => {
-  if (urlDatabase.hasOwnProperty(request.params.id) !== -1) {
-    if (request.session.user_id === urlDatabase[request.params.id].owner) {
+  if (request.session.user_id === urlDatabase[request.params.id].owner) {
       let templateVariables = {
         shortURL: request.params.id,
         urls: urlDatabase[request.params.id],
-        username: users[request.session.user_id].userid,
-        email: users[request.session.user_id].email
+        user: users[request.session.user_id],
       };
       response.render('urls_show', templateVariables);
     } else {
       response.redirect(401, '/login');
-    }
-  } else {
-    response.redirect(401, '/login');
   }
 });
 
@@ -167,9 +194,6 @@ app.post('/logout', (request, response) => {
 });
 
 app.get('/register', (request, response) => {
-  let templateVariables = {
-    urls: urlDatabase,
-  };
   response.render('urls_register');
 });
 
@@ -192,7 +216,7 @@ app.post('/register', (request, response) => {
       default:
         users[userKey] = {
           id: userKey,
-          userid: request.body.userid,
+          username: request.body.userid,
           email: request.body.email,
           password: bcrypt.hashSync(request.body.password, 10), // added hashed password
         };
@@ -206,37 +230,6 @@ app.post('/register', (request, response) => {
 app.get('/:id', (request, response) => {
   response.redirect('/login');
 });
-
-// Generate random number [A-Za-z0-9]
-function generateRandomString() {
-  let result = ["tu."];
-  const possibleChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 6; i++) {
-    result.push(possibleChars[Math.floor(Math.random() * possibleChars.length)]);
-  }
-  return result.join("");
-}
-
-// received some help from Adam
-function filterLinksByOwner(userKey) {
-  let userLinks = {};
-  for (let link in urlDatabase) {
-    if (urlDatabase[link].owner === userKey) {
-      userLinks[link] = urlDatabase[link].longURL;
-    }
-  }
-  return userLinks;
-}
-
-// existing account verification, if existing, then return the user_id key. If not, then return false
-function findUserByEmail(email) {
-  for (let user in users) {
-    if (email === users[user].email) {
-      return users[user];
-    }
-  }
-  return false;
-}
 
 // port verification on console
 app.listen(8080);

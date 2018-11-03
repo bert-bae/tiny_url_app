@@ -9,19 +9,22 @@
       <% include ./partials/_header.ejs %>
 
 
-      <% if (username !== "") { %>
+      <% if (user !== "") { %>
         <table>
           <% for (let link in urls) { %>
             <tr>
-              <p><%= link %> - <a href = <%= urls[link] %>><%= urls[link] %></a></p>
-              <form method = "GET" action = "/urls/<%= link %>">
-                <button>Edit</button>
-              </form>
-
-              <form method = "POST" action = "/urls/<%= link %>/delete">
-                <button>Delete</button>
-              </form>
-            </tr><br>
+              <td><p><%= link %> - <a href = <%= urls[link] %>><%= urls[link] %></a></p></td>
+              <td>
+                <form method = "GET" action = "/urls/<%= link %>">
+                  <button>Edit</button>
+                </form>
+              </td>
+              <td>
+                <form method = "POST" action = "/urls/<%= link %>/delete">
+                  <button>Delete</button>
+                </form>
+              </td>
+            </tr>
           <% } %>
         </table>
       <% } else { %>

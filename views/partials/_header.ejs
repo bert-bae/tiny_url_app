@@ -1,10 +1,10 @@
 <header>
   <h1>TinyURL</h1>
 
-    <% if (username) { %>
-      <p> Welcome <%= username %> (<%= email %>)!
+    <% if (user) { %>
+      <p> Welcome <%= user.username %> (<%= user.email %>)! </p>
         <form method = "POST" action = "/logout">
-          <button>Log Out</button></p>
+          <button>Log Out</button>
         </form>
     <% } else { %>
       <form method = "GET" action = "/login" style = "display: inline">
